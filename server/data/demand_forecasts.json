@@ -13,8 +13,8 @@
     "item_sku": "BRG-102",
     "item_name": "Steel Bearing Assembly",
     "current_demand": 150,
-    "forecasted_demand": 152,
-    "trend": "stable",
+    "forecasted_demand": 210,
+    "trend": "increasing",
     "period": "Next 30 days"
   },
   {
@@ -67,8 +67,8 @@
     "item_sku": "SNR-420",
     "item_name": "Temperature Sensor Module",
     "current_demand": 180,
-    "forecasted_demand": 182,
-    "trend": "stable",
+    "forecasted_demand": 260,
+    "trend": "increasing",
     "period": "Next 30 days"
   },
   {

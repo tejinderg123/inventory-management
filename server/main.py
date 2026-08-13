@@ -2,7 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
+from datetime import date, datetime, timedelta
+import uuid
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders
+
+restock_orders: list = []
 
 app = FastAPI(title="Factory Inventory Management System")
 
@@ -119,6 +123,25 @@ class CreatePurchaseOrderRequest(BaseModel):
     unit_cost: float
     expected_delivery_date: str
     notes: Optional[str] = None
+
+class CreateRestockOrderItem(BaseModel):
+    item_sku: str
+    item_name: str
+    quantity: int
+    unit_cost: float
+    supplier_name: str = "TBD"
+
+class RestockOrder(BaseModel):
+    id: str
+    item_sku: str
+    item_name: str
+    quantity: int
+    unit_cost: float
+    total_cost: float
+    supplier_name: str
+    expected_delivery_date: str
+    status: str
+    created_date: str
 
 # API endpoints
 @app.get("/")
@@ -303,6 +326,34 @@ def get_monthly_trends():
     result = list(months.values())
     result.sort(key=lambda x: x['month'])
     return result
+
+@app.get("/api/restock-orders", response_model=List[RestockOrder])
+def get_restock_orders():
+    """Get all submitted restock orders"""
+    return restock_orders
+
+@app.post("/api/restock-orders", response_model=List[RestockOrder])
+def create_restock_orders(items: List[CreateRestockOrderItem]):
+    """Submit a batch of restock orders"""
+    delivery_date = (date.today() + timedelta(days=14)).isoformat()
+    now = datetime.now().isoformat()
+    created = []
+    for item in items:
+        order = {
+            "id": f"RST-{str(uuid.uuid4())[:8].upper()}",
+            "item_sku": item.item_sku,
+            "item_name": item.item_name,
+            "quantity": item.quantity,
+            "unit_cost": item.unit_cost,
+            "total_cost": round(item.quantity * item.unit_cost, 2),
+            "supplier_name": item.supplier_name,
+            "expected_delivery_date": delivery_date,
+            "status": "Processing",
+            "created_date": now
+        }
+        restock_orders.append(order)
+        created.append(order)
+    return created
 
 if __name__ == "__main__":
     import uvicorn

@@ -74,6 +74,45 @@
           </table>
         </div>
       </div>
+
+      <div v-if="restockOrders.length > 0" class="card restock-orders-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            Restock Orders
+            <span class="count-badge">{{ restockOrders.length }}</span>
+          </h3>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>SKU</th>
+                <th>Item Name</th>
+                <th>Qty</th>
+                <th>Unit Cost</th>
+                <th>Total</th>
+                <th>Supplier</th>
+                <th>Expected Delivery</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="order in restockOrders" :key="order.id">
+                <td><strong>{{ order.id }}</strong></td>
+                <td>{{ order.item_sku }}</td>
+                <td>{{ order.item_name }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>${{ order.unit_cost.toFixed(2) }}</td>
+                <td><strong>${{ order.total_cost.toLocaleString() }}</strong></td>
+                <td>{{ order.supplier_name }}</td>
+                <td>{{ formatDate(order.expected_delivery_date) }}</td>
+                <td><span class="badge info">{{ order.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -95,6 +134,8 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
+    const restockOrders = ref([])
+    const restockLoading = ref(false)
 
     // Use shared filters
     const {
@@ -153,7 +194,21 @@ export default {
       })
     }
 
-    onMounted(loadOrders)
+    const loadRestockOrders = async () => {
+      try {
+        restockLoading.value = true
+        restockOrders.value = await api.getRestockOrders()
+      } catch (err) {
+        console.error('Failed to load restock orders:', err)
+      } finally {
+        restockLoading.value = false
+      }
+    }
+
+    onMounted(() => {
+      loadOrders()
+      loadRestockOrders()
+    })
 
     return {
       t,
@@ -165,7 +220,8 @@ export default {
       formatDate,
       currencySymbol,
       translateProductName,
-      translateCustomerName
+      translateCustomerName,
+      restockOrders
     }
   }
 }
@@ -275,5 +331,16 @@ export default {
 .item-meta {
   font-size: 0.813rem;
   color: #64748b;
+}
+
+.count-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
 }
 </style>
